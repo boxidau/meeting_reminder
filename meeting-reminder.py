@@ -4,26 +4,27 @@ import datetime
 import serial
 import time
 
-SEPARATOR = '-:::- '
+SEPARATOR = b'-:::- '
 
-SERIAL_DEVICE = '/dev/cu.usbmodemfd111'
+SERIAL_DEVICE = '/dev/cu.usbmodem1411'
 
-icalcmd = 'icalBuddy -b "{}" -tf "%H:%M" -n -eed eventsToday'.format(SEPARATOR)
+icalcmd = 'icalBuddy -ea -n -nc -eed -po "title,datetime,location,attendees,notes" -eep "notes,attendees" -df "%Y-%m-%d" -tf "%H:%M" -nrd -b "{}" eventsToday+2'.format(SEPARATOR)
 
 def parseOutput(output):
-  now = datetime.datetime.now()
   events = []
   for event in output.split(SEPARATOR):
     
     event_lines = event.splitlines()
-    if len(event_lines) == 1:
-      print 'Ignoring all day event: ' + event_lines[0]
 
-    if len(event_lines) == 2:
-      start_time = event_lines[1].strip().split(':')
+    if len(event_lines) > 1:
+      start = event_lines[1].strip().split(b' at ')
+      start_time = start[1].strip().split(b':')
+      start_date = start[0].strip().split(b'-')
+      
       events.append({
-        'name': event_lines[0],
-        'start': datetime.datetime(now.year, now.month, now.day, int(start_time[0]), int(start_time[1]))
+        'title': event_lines[0],
+        'start': datetime.datetime(int(start_date[0]), int(start_date[1]), int(start_date[2]), int(start_time[0]), int(start_time[1])),
+        'location': event_lines[2]
       })
   return events
 
@@ -40,11 +41,13 @@ def getNextEventMinutes(events):
   return nextEvent
 
 def sendData(mins):
-  if mins:
-    print 'sending {}'.format(mins)
-    ser = serial.Serial(SERIAL_DEVICE, 9600, timeout=0.5)
-    ser.write('{}\n'.format(mins))
-    ser.close()
+  if not mins:
+    mins = 255
+  
+  print('sending {}'.format(mins).encode())
+  ser = serial.Serial(SERIAL_DEVICE, 9600, timeout=0.5)
+  ser.write('{}\n'.format(mins).encode())
+  ser.close()
 
 if __name__ == '__main__':
   while (True):
@@ -56,7 +59,6 @@ if __name__ == '__main__':
     ).stdout.read()
 
     events = parseOutput(ical_output)
-    print repr(events)
 
     sendData(getNextEventMinutes(events))
     time.sleep(5)
