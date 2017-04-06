@@ -5,6 +5,9 @@ import serial
 import time
 import sys
 import glob
+import logging
+
+logging.basicConfig(filename='meeting-reminder.log',level=logging.DEBUG)
 
 SEPARATOR = '-:::- '
 
@@ -21,14 +24,14 @@ def setupSerial():
   devices = glob.glob(serial_regex)
   for device in devices:
     try:
-      print('Trying serial device: {}'.format(device))
+      logging.info('Trying serial device: {}'.format(device))
       ser = serial.Serial(device, 9600, timeout=0.5)
       ser.close()
-      print('Device OK')
+      logging.info('Device OK')
       SERIAL_DEVICE = device
       return device
     except:
-      print('Device error')
+      logging.error('Device error')
       pass
 
 def parseOutput(output):
@@ -80,13 +83,13 @@ def sendData(mins):
   if not mins:
     mins = 255
   
-  print('sending {}'.format(mins))
+  logging.info('sending {}'.format(mins))
   try:
     ser = serial.Serial(SERIAL_DEVICE, 9600, timeout=0.5)
     ser.write('{}\n'.format(mins).encode())
     ser.close()
   except serial.serialutil.SerialException:
-    print("Serial port error")
+    logging.error("Serial port error")
     setupSerial()
 
 if __name__ == '__main__':
