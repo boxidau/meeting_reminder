@@ -7,4 +7,4 @@ Feel free to make it better, or don't whatever :)
 
 You need to add your calendars to OSX iCalendar for this to work
 
-![bus](https://raw.githubusercontent.com/boxidau/meeting_reminder/master/bus.jpg, "Reminder Bus")
+![bus](https://raw.githubusercontent.com/boxidau/meeting_reminder/master/bus.jpg "Reminder Bus")
